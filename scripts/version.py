@@ -34,29 +34,29 @@ if __name__ == "__main__":
         ver_build = int(
             re.search(r'^#define\s+VERSION_BUILD\s+(\d+)$', original, re.M).group(1))
         ver_source = re.search(
-            r'^#define\s+VERSION_SOURCE\s+(\S+)$', original, re.M).group()
+            r'^#define\s+VERSION_SOURCE\s+(\S+)$', original, re.M).group(1)
         ver_prerelease = re.search(
-            r'^#define\s+VERSION_PRERELEASE\s+(\S+)$', original, re.M).group()
+            r'^#define\s+VERSION_PRERELEASE\s+(\S+)$', original, re.M).group(1)
     except re.error:
         print('parse version file failed ...')
         sys.exit(0)
     finally:
         f.close()
 
-    print('old version:%d.%d.%d.%d.%s %s' % (ver_major, ver_minor,
-          ver_patch, ver_build, ver_source, ver_prerelease))
-
     old_ver_build = '#define VERSION_BUILD         ' + str(ver_build)
-    ver_build += 1
-    new_ver_build = '#define VERSION_BUILD         ' + str(ver_build)
-
+    new_ver_build = '#define VERSION_BUILD         ' + str(ver_build+1)
     old_ver_source = str(ver_source)
     ver_source = subprocess.check_output(
         ["git", "rev-parse", "--short", "HEAD"]).strip()
-    new_ver_source = '#define VERSION_SOURCE        ' + str(ver_source, encoding="utf-8")
-
+    new_ver_source = str(ver_source,encoding="utf-8")
+    
+    print('old version:%d.%d.%d.%d.%s %s' % (ver_major, ver_minor,
+          ver_patch, ver_build, old_ver_source, ver_prerelease))
+          
+    ver_build += 1
+    
     print('new version:%d.%d.%d.%d.%s %s' % (ver_major, ver_minor,
-          ver_patch, ver_build, ver_source, ver_prerelease))
+          ver_patch, ver_build, new_ver_source, ver_prerelease))
 
     f = open(args.header_path)
     old_content = f.read()
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     new_content = re.sub(old_ver_build,  new_ver_build, old_content)
     new_content = re.sub(old_ver_source, new_ver_source, new_content)
-    sb = bytes(new_content, encoding="gb2312")
+    sb = bytes(new_content, encoding="utf-8")
     f = open(args.header_path, 'wb')
     f.write(sb)
     f.close()
